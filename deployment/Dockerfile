@@ -3,7 +3,7 @@ FROM golang:1.22 as builder
 ENV GO111MODULE=on
 ENV GOPATH=/root/go
 RUN mkdir -p /root/go/src
-COPY dyndns /root/go/src/dyndns
+COPY ../dyndns /root/go/src/dyndns
 WORKDIR /root/go/src/dyndns
 RUN go mod tidy
 RUN GOOS=linux go build -o /root/go/bin/dyndns && go test -v

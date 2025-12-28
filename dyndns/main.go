@@ -1,8 +1,12 @@
 package main
 
 import (
+	"context"
 	"html/template"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/benjaminbear/docker-ddns-server/dyndns/handler"
@@ -18,7 +22,7 @@ func main() {
 	// Set new instance
 	e := echo.New()
 
-	e.Logger.SetLevel(log.ERROR)
+	e.Logger.SetLevel(log.INFO)
 
 	e.Use(middleware.Logger())
 
@@ -113,6 +117,25 @@ func main() {
 		return c.JSON(http.StatusOK, u)
 	})
 
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
 	// Start server
-	e.Logger.Fatal(e.Start(":8080"))
+	go func() {
+		e.Logger.Info("Starting server on :8080")
+		if err := e.Start(":8080"); err != nil && err != http.ErrServerClosed {
+			e.Logger.Fatal("shutting down the server")
+		}
+	}()
+
+	// Wait for interrupt signal to gracefully shut down the server with a timeout of 10 seconds.
+	<-ctx.Done()
+	e.Logger.Info("Received shutdown signal")
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	e.Logger.Info("Shutting down")
+	if err := e.Shutdown(ctx); err != nil {
+		e.Logger.Fatal(err)
+	}
+	e.Logger.Info("Shut down")
 }

@@ -1,6 +1,6 @@
 # Dynamic DNS Server for Docker with Web UI written in Go
 
-This is a fork of [](https://github.com/benjaminbear/docker-ddns-server) with packages renamed. With thanks for the original.
+This is a fork of [https://github.com/benjaminbear/docker-ddns-server](https://github.com/benjaminbear/docker-ddns-server) with packages renamed. With thanks for the original.
 
 ## Differences
 

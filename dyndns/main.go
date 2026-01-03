@@ -9,13 +9,13 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/benjaminbear/docker-ddns-server/dyndns/handler"
 	"github.com/foolin/goview"
 	"github.com/foolin/goview/supports/echoview-v4"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
+	"github.com/waddyano/docker-ddns-server/dyndns/handler"
 )
 
 func main() {
@@ -119,6 +119,25 @@ func main() {
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+
+	go func() {
+		// Try to clean old logs every hour
+		ticker := time.NewTicker(60 * time.Minute)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				msg, err := h.BackgroundClearLogs()
+				res := "OK"
+				if err != nil {
+					res = err.Error()
+				}
+				e.Logger.Info("clear logs: ", res, msg)
+			}
+		}
+	}()
 
 	// Start server
 	go func() {

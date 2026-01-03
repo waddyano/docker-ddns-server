@@ -10,24 +10,23 @@ import (
 	"strings"
 	"time"
 
-	"github.com/benjaminbear/docker-ddns-server/dyndns/model"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"github.com/tg123/go-htpasswd"
+	"github.com/waddyano/docker-ddns-server/dyndns/model"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
 type Handler struct {
-	DB               *gorm.DB
-	AuthAdmin        bool
-	Config           Envs
-	Title            string
-	DisableAdminAuth bool
-	LastClearedLogs  time.Time
-	ClearInterval    uint64
-	AllowWildcard    bool
-	LogoutUrl        string
+	DB                *gorm.DB
+	AuthAdmin         bool
+	Config            Envs
+	Title             string
+	DisableAdminAuth  bool
+	AutoClearInterval float64 // in hours
+	AllowWildcard     bool
+	LogoutUrl         string
 }
 
 type Envs struct {
@@ -51,7 +50,6 @@ type Error struct {
 // Authenticate is the method the website admin user and the host update user have to authenticate against.
 // To gather admin rights the username password combination must match with the credentials given by the env var.
 func (h *Handler) AuthenticateUpdate(username, password string, c echo.Context) (bool, error) {
-	h.CheckClearInterval()
 	reqParameter := c.QueryParam("hostname")
 	reqArr := strings.SplitN(reqParameter, ".", 2)
 	if len(reqArr) != 2 {
@@ -136,16 +134,13 @@ func (h *Handler) ParseEnvs() (adminAuth bool, err error) {
 		}
 	}
 
-	clearEnv := os.Getenv("DDNS_CLEAR_LOG_INTERVAL")
-	clearInterval, err := strconv.ParseUint(clearEnv, 10, 32)
+	clearEnv := os.Getenv("DDNS_AUTO_CLEAR_LOG_INTERVAL")
+	clearInterval, err := strconv.ParseFloat(clearEnv, 64)
 	if err != nil {
-		log.Info("No log clear interval found")
+		log.Info("No log clear interval found assuming 0.2 hours")
 	} else {
-		log.Info("log clear interval found: ", clearInterval, "days")
-		h.ClearInterval = clearInterval
-		if clearInterval > 0 {
-			h.LastClearedLogs = time.Now()
-		}
+		log.Info("log clear interval found: ", clearInterval, "hours")
+		h.AutoClearInterval = clearInterval
 	}
 
 	h.Config.Domains = strings.Split(os.Getenv("DDNS_DOMAINS"), ",")
@@ -173,15 +168,6 @@ func (h *Handler) InitDB() (err error) {
 	err = h.DB.AutoMigrate(&model.Host{}, &model.CName{}, &model.Log{})
 
 	return err
-}
-
-// Check if a log cleaning is needed
-func (h *Handler) CheckClearInterval() {
-	if !h.LastClearedLogs.IsZero() {
-		if !DateEqual(time.Now(), h.LastClearedLogs) {
-			go h.ClearLogs()
-		}
-	}
 }
 
 // compare two dates

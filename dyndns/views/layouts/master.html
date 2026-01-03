@@ -17,6 +17,43 @@
 
     <!-- Custom styles for this template -->
     <link href="/static/css/narrow-jumbotron.css" rel="stylesheet">
+    <script>
+        function convertTimesToLocalTimezone(rootElement) {
+            const timeElements = rootElement.querySelectorAll('time');
+            
+            timeElements.forEach(timeEl => {
+                const datetime = timeEl.getAttribute('datetime');
+                
+                if (!datetime) {
+                    console.warn('Time element missing datetime attribute:', timeEl);
+                    return;
+                }
+                
+                try {
+                    const date = new Date(datetime);
+                    
+                    if (isNaN(date.getTime())) {
+                        console.warn('Invalid datetime value:', datetime);
+                        return;
+                    }
+                    
+                    const localTimeString = date.toLocaleString(undefined, {
+                        year: 'numeric',
+                        month: 'numeric',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        timeZoneName: 'short'
+                    });
+                    
+                    timeEl.textContent = localTimeString;
+                    
+                } catch (error) {
+                    console.error('Error processing time element:', error, timeEl);
+                }
+            });
+        }
+    </script>
 </head>
 
 <body>

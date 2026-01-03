@@ -1,17 +1,24 @@
 # Dynamic DNS Server for Docker with Web UI written in Go
 
-![Build status](https://img.shields.io/github/actions/workflow/status/benjaminbear/docker-ddns-server/build.yml)
+This is a fork of [](https://github.com/benjaminbear/docker-ddns-server) with packages renamed. With thanks for the original.
 
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/benjaminbear/docker-ddns-server)
-![Go version](https://img.shields.io/github/go-mod/go-version/benjaminbear/docker-ddns-server?filename=dyndns%2Fgo.mod)
-![License](https://img.shields.io/github/license/benjaminbear/docker-ddns-server)
+## Differences
+
+* Format changes in the UI - no wrapping in tables, separate out the delete host button more to precent accidents, report some times in browser timezone
+* Add periodic clean up to really delete log entries, delete entries older than 60 days but keep 10 for every host however old they are
+* Removed DDNS_CLEAR_LOG_INTERVAL which didn't work due to date formatting in sqlite
+* Tweaked so I can build and run using podman rather than docker itself
+* Updated README.md
+
+![Go version](https://img.shields.io/github/go-mod/go-version/waddyano/docker-ddns-server?filename=dyndns%2Fgo.mod)
+![License](https://img.shields.io/github/license/waddyano/docker-ddns-server)
 
 With docker-ddns-server you can set up your own dynamic DNS server. This project is inspired by https://github.com/dprandzioch/docker-ddns . In addition to the original version, you can setup and maintain your dyndns entries via simple web ui.
 
 <p float="left">
-<img src="https://raw.githubusercontent.com/benjaminbear/docker-ddns-server/master/img/addhost.png" width="285">
-<img src="https://raw.githubusercontent.com/benjaminbear/docker-ddns-server/master/img/listhosts.png" width="285">
-<img src="https://raw.githubusercontent.com/benjaminbear/docker-ddns-server/master/img/listlogs.png" width="285">
+<img src="https://raw.githubusercontent.com/waddyano/docker-ddns-server/master/img/addhost.png" width="285">
+<img src="https://raw.githubusercontent.com/waddyano/docker-ddns-server/master/img/listhosts.png" width="285">
+<img src="https://raw.githubusercontent.com/waddyano/docker-ddns-server/master/img/listlogs.png" width="285">
 </p>
 
 ## Installation
@@ -20,7 +27,7 @@ You can either take the docker image or build it on your own.
 
 ### Using the docker image
 
-https://registry.hub.docker.com/r/bbaerthlein/docker-ddns-server
+localhost/dyndns
 
 Just customize this to your needs and run:
 
@@ -36,7 +43,7 @@ docker run -it -d \
     -e DDNS_PARENT_NS=ns.example.com \
     -e DDNS_DEFAULT_TTL=3600 \
     --name=dyndns \
-    bbaerthlein/docker-ddns-server:latest
+    localhost/dyndns
 ```
 
 ### Using docker-compose
@@ -60,8 +67,6 @@ If `DDNS_ADMIN_LOGIN` is not set, all /admin routes are without protection. (use
 `DDNS_PARENT_NS` is the parent name server of your domain i.e. `ns.example.com`
 
 `DDNS_DEFAULT_TTL` is the default TTL of your dyndns server.
-
-`DDNS_CLEAR_LOG_INTERVAL` optional: clear log entries automatically in days (integer) e.g. `DDNS_CLEAR_LOG_INTERVAL:30`
 
 `DDNS_ALLOW_WILDCARD` optional: allows all `*.subdomain.dyndns.example.com` to point to your ip (boolean) e.g. `true`
 

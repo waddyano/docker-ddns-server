@@ -1,7 +1,7 @@
 {{define "content"}}
     <div class="container marketing">
         <h3 class="text-center mb-4">Log Entries {{.count}}</h3>
-        <table class="table table-striped text-center text-nowrap" style="font-size: 14px">
+        <table id="logsTable" class="table table-striped text-center text-nowrap" style="font-size: 14px">
             <thead>
             <tr>
                 <th>Status</th>
@@ -18,7 +18,7 @@
                     <td class="align-middle mx-auto"><div class="{{if .Status}}bg-success{{else}}bg-danger{{end}}" style="width: 16px; height: 16px; margin: auto"></div></td>
                     <td>{{.Host.Hostname}}.{{.Host.Domain}}</td>
                     <td>{{.SentIP}}</td>
-                    <td>{{.CreatedAt.Format "01/02/2006 15:04"}}</td>
+                    <td><time datetime="{{.CreatedAt.Format "2006-01-02T15:04:05Z07:00"}}">{{.CreatedAt.Format "01/02/2006 15:04 MST"}}</time></td>
                     <td>{{.UserAgent}}</td>
                     <td>{{.CallerIP}}</td>
                 </tr>
@@ -26,4 +26,7 @@
             </tbody>
         </table>
     </div>
+<script>
+    convertTimesToLocalTimezone(document.getElementById('logsTable'))
+</script>
 {{end}}

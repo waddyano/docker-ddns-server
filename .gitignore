@@ -22,3 +22,4 @@ go.sum
 
 # skip the database folder
 database
+/dyndns/dyndns
